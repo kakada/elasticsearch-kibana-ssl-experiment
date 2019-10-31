@@ -1,2 +1,32 @@
-# elasticsearch-kibana-ssl-experiment
-Experiment to run and configure docker Elasticsearch and Kibana on HTTPS(SSL/TLS)
+# Run the example
+Generate the certificates (only needed once):
+```bash
+docker-compose -f create-elasticsearch-certs.yml run --rm create_certs
+```
+Start two Elasticsearch nodes configured for SSL/TLS:
+```bash
+docker-compose up -d
+```
+
+Access the Elasticsearch API over SSL/TLS using the bootstrapped password:
+```bash
+docker run --rm -v es_certs:/certs --network=es_default docker.elastic.co/elasticsearch/elasticsearch:7.4.1 curl --cacert /certs/ca/ca.crt -u elastic:PleaseChangeMe https://es01:9200
+```
+
+The elasticsearch-setup-passwords tool can also be used to generate random passwords for all users:
+Windows users not running PowerShell will need to remove \ and join lines in the snippet below.
+
+```bash
+docker exec es01 /bin/bash -c "bin/elasticsearch-setup-passwords \
+auto --batch \
+-Expack.security.http.ssl.certificate=certificates/es01/es01.crt \
+-Expack.security.http.ssl.certificate_authorities=certificates/ca/ca.crt \
+-Expack.security.http.ssl.key=certificates/es01/es01.key \
+--url https://localhost:9200"
+```
+
+# Tear everything downedit
+To remove all the Docker resources created by the example, issue:
+```bash
+docker-compose down -v
+```
